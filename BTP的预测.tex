@@ -1,0 +1,124 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{fontspec}
+\usepackage{setspace}
+\usepackage{xeCJK} 
+\defaultfontfeatures{Mapping=tex-text}
+\usepackage{xunicode}
+\usepackage{xltxtra}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage[left=2cm,right=2cm,top=3cm,bottom=3cm]{geometry}
+\usepackage{float}
+
+\renewcommand{\baselinestretch}{1.25}
+
+\begin{document}
+
+\begin{center}
+\begin{LARGE}
+\textbf{BTP的预测}
+\end{LARGE}
+\end{center}
+\textbf{预测目标：预测未来10分钟、15分钟的BTP状态}
+
+由前分析，我们可得到一段时间（约两小时）内模拟的BTP轨迹，即 
+$\widehat{z_{B}}$. 每一个数据点代表每五秒获得的一个新的估计值。
+为了达到预测目标，首先，以12个数据点为一组，计算每分钟BTP的估计值，即每组数据的 $\widehat{z_{B}}$的平均值，作为新的样本 $ Y $进行分析和预测， $ Y $在未来第10阶和未来第15阶的预测即为未来10分钟、15分钟的BTP预测。
+
+\section{$Y $的分析}
+
+结论：Y具有较强的趋势性，不具有随机数据的特征，ARIMA模型等不适用于Y的拟合和预测。
+
+分析方法：小波分析方法和傅立叶方法。
+
+\subsection{自相关函数和偏自相关函数}
+
+
+\subsection{小波分析方法}
+ 选用小波基coif2对$ Y $做小波分析。
+ 
+ 首先在Level 3的水平上对$Y$做小波分解，$ Y $被分解为A3, D3, D2, D1.
+ D为分解得到的随机项，从图1的振幅来看，随机项的影响相对较小。
+ 并且由于原始数据$ Y $的计算依赖于优化模型，此处随机项具有为随机性，不做为分析的重点。
+ 主要分析A3的拟合估计。
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{coif(2,3)_1.png}\\
+ \caption{小波分解（coif2，Level 3 ）\quad}
+\end{figure}
+
+由图2-1可知，A3可以较为准确的拟合$Y$的趋势，过滤噪音，但仍出现明显的拟合错误（比如在第110分钟左右）。图2-2的原始系数显示，Level 3 的窗口大小约为10。
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{coif(2,3)_2.png}\\
+ \caption{趋势拟合（coif2，Level 3 ）\quad}
+\end{figure}
+
+而图3的傅立叶变换谱显示能量在频率0.1前集中，即窗口大小约为15时，振幅特征可被有效提取。
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{coif(2,3)_3.png}\\
+ \caption{残差分析（coif2，Level 3 ）\quad}
+\end{figure}
+
+由以上分析，可选择小波分析的窗口为15分钟。在此，我们用小波基coif2在Level 4的水平上对$Y$做小波分解，由图4和图5-1可知，A4可以准确的拟合$Y$的趋势（也许稍显粗糙）。图5-2也标明Level 4的窗口大小约为15。
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{coif(2,4)_1.png}\\
+ \caption{小波分解（coif2，Level 4 ）\quad}
+\end{figure}
+
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{coif(2,4)_2.png}\\
+ \caption{趋势拟合（coif2，Level 4 ）\quad}
+\end{figure}
+
+图6的傅立叶变换谱也证明了窗口大小设定为15的充分性。
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{coif(2,4)_3.png}\\
+ \caption{残差分析（coif2，Level 4 ）\quad}
+\end{figure}
+
+\subsection{傅立叶方法}
+
+对整个时间序列信号$ Y $做傅立叶变换，如图7，明显可以得出，能量集中在频率0.1之前，同上述图3、图6中的残差傅立叶谱图一致，表明：窗口大小约为15时，振幅特征可被有效提取。
+
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{fft_1.png}\\
+ \caption{傅立叶谱\quad}
+\end{figure}
+
+设定窗口大小为15，对上述谱进行傅立叶重构（傅立叶逆变换），由图8可以明显看出，重构的时间序列准确拟合了原数据$ Y $的趋势，消除了毛刺。
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{fft_2.png}\\
+ \caption{窗口为15的傅立叶重构\quad}
+\end{figure}
+
+\section{$ Y $ 的预测}
+
+
+基于以上分析，我们将用局部常系数模型（Locally Constant Mean Model）来进行该时间序列分析，用15分钟内的$ Y $的平均或加权平均值作为未来的预测值，同时计算出其以2倍标准差为误差范围的预测区间。
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{predict_1.png}\\
+ \caption{未来10分钟的BTP状态\quad}
+\end{figure}
+
+\begin{figure}[H]
+ \centering
+ \includegraphics[height=3in,width=6.5in]{predict_2.png}\\
+ \caption{未来15分钟的BTP状态\quad}
+\end{figure}
+
+
+
+
+
+\end{document}
